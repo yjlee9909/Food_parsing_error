@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,10 +19,19 @@ import com.example.navi_addcalendar.R;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 public class FoodFragment extends Fragment {
 
+    EditText edit;
+    TextView text;
+
+    String Key = "NO2EbE%2Bu5KtWhuLp1rQALIAtWWnRDgj9mCuelgBAxRS%2Frxi12vyAMLBp%2F3KEanPiRfbO3hwggbbpZ%2B0XtKIolQ%3D%3D";
+    String data;
 
     public FoodFragment() {
 
@@ -54,8 +64,9 @@ public class FoodFragment extends Fragment {
 
         StrictMode.enableDefaults();
 
+        edit = (EditText) view.findViewById(R.id.edit);
+        text = (TextView) view.findViewById(R.id.text);
         TextView status1 = (TextView)view.findViewById(R.id.result);
-
 
         boolean initem = false, inbsnsSector = false, inbsnsCond = false, inbsnsNm = false, inaddrRoad = false, inaddrJibun = false;
         boolean inmenu = false, intel = false, inspecDate = false, inovrdDate = false, ingugun = false, indataDay = false, inlat = false, inlng = false;
@@ -196,4 +207,170 @@ public class FoodFragment extends Fragment {
         }
         return view;
     }
+
+    public void mOnClick(View v) {
+        switch (v.getId()){
+            case R.id.button:
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        data = getXmlData();
+
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                text.setText(data);
+                            }
+                        });
+                    }
+                }).start();
+
+                break;
+
+
+        }
+    }
+
+
+    String getXmlData() {
+
+        StringBuffer buffer = new StringBuffer();
+
+        String str = edit.getText().toString();
+        String location = null;
+        try {
+            location = URLEncoder.encode(str,"UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        String queryUrl = "http://apis.data.go.kr/6260000/BusanTblFnrstrnStusService/getTblFnrstrnStusInfo?"
+                +"serviceKey="+ Key
+                +"&numOfRows=10&pageNo=1"
+                +"&bsnsNm="+ location;
+
+
+        try {
+            URL url = new URL(queryUrl);
+            InputStream is = url.openStream();
+
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlPullParser xpp = factory.newPullParser();
+            xpp.setInput(new InputStreamReader(is, "UTF-8"));
+
+            String tag;
+
+            xpp.next();
+            int eventType= xpp.getEventType();
+
+            while( eventType != XmlPullParser.END_DOCUMENT ){
+
+                switch (eventType){
+                    case XmlPullParser.START_DOCUMENT:
+                        buffer.append("파싱시작...\n\n");
+                        break;
+
+                    case XmlPullParser.START_TAG:
+                        tag=xpp.getName();
+
+                        if(tag.equals("item"));
+                        else if(tag.equals("bsnsSector")){
+                            buffer.append("업종 : ");
+                            xpp.next();
+                            buffer.append(xpp.getText());
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("bsnsCond")){
+                            buffer.append("업태 : ");
+                            xpp.next();
+                            buffer.append(xpp.getText());
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("bsnsNm")){
+                            buffer.append("업소명 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//cpId
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("addrRoad")){
+                            buffer.append("소재지(도로명) :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//cpNm
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("addrJibun")){
+                            buffer.append("소재지(지번) :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("menu")){
+                            buffer.append("메뉴 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("tel")) {
+                            buffer.append("전화번호 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("specDate")) {
+                            buffer.append("지정일자 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("ovrdDate")) {
+                            buffer.append("재지정일자 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("gugun")) {
+                            buffer.append("구군명 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("dataDay")) {
+                            buffer.append("데이터기준일자 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("lat")) {
+                            buffer.append("위도 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        else if(tag.equals("lng")) {
+                            buffer.append("경도 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//
+                            buffer.append("\n");
+                        }
+                        break;
+                    case  XmlPullParser.TEXT:
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        tag= xpp.getName();
+                        if(tag.equals("item"))buffer.append("\n");
+                        break;
+
+
+                }
+                eventType= xpp.next();
+            }
+        } catch(Exception e){
+
+        }
+        buffer.append("파싱끝");
+        return buffer.toString();
+    }
 }
+
